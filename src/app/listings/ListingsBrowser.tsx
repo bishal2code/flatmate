@@ -2,10 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import ListingCard from "./ListingCard";
 import ListingsSkeletonGrid from "./ListingsSkeletonGrid";
-import { filterMockListings, MOCK_LISTINGS } from "./mockListings";
 import {
   buildListingsQueryUrl,
   DEFAULT_FILTERS,
@@ -26,10 +24,6 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export default function ListingsBrowser() {
-  const searchParams = useSearchParams();
-  const initialMock = searchParams.get("mock") === "1";
-
-  const [useMockData, setUseMockData] = useState(initialMock);
   const [filters, setFilters] = useState<ListingFilters>(DEFAULT_FILTERS);
   const [debouncedLocation, setDebouncedLocation] = useState("");
   const [reloadNonce, setReloadNonce] = useState(0);
@@ -46,9 +40,8 @@ export default function ListingsBrowser() {
     return () => window.clearTimeout(timer);
   }, [filters.location]);
 
-  const missingEnv = !useMockData && (!SUPABASE_URL || !SUPABASE_ANON_KEY);
+  const missingEnv = !SUPABASE_URL || !SUPABASE_ANON_KEY;
   const currentQueryKey = JSON.stringify({
-    useMockData,
     location: debouncedLocation,
     priceRange: filters.priceRange,
     listingType: filters.listingType,
@@ -66,9 +59,6 @@ export default function ListingsBrowser() {
   }, []);
 
   useEffect(() => {
-    if (useMockData) {
-      return;
-    }
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       return;
     }
@@ -117,31 +107,20 @@ export default function ListingsBrowser() {
       controller.abort();
     };
   }, [
-    useMockData,
     currentQueryKey,
     debouncedLocation,
     filters.priceRange,
     filters.listingType,
   ]);
 
-  const isLoading =
-    !useMockData && !missingEnv && resultState.key !== currentQueryKey;
-  const errorMessage = useMockData
-    ? null
-    : missingEnv
-      ? "Supabase environment variables are missing. Please check .env.local."
-      : resultState.key === currentQueryKey
-        ? resultState.error
-        : null;
-  const listings = useMockData
-    ? filterMockListings(MOCK_LISTINGS, {
-        location: debouncedLocation,
-        priceRange: filters.priceRange,
-        listingType: filters.listingType,
-      })
+  const isLoading = !missingEnv && resultState.key !== currentQueryKey;
+  const errorMessage = missingEnv
+    ? "Supabase environment variables are missing. Please check .env.local."
     : resultState.key === currentQueryKey
-      ? resultState.listings
-      : [];
+      ? resultState.error
+      : null;
+  const listings =
+    resultState.key === currentQueryKey ? resultState.listings : [];
 
   const countLabel = isLoading
     ? "Loading listings..."
@@ -153,36 +132,20 @@ export default function ListingsBrowser() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Rooms &amp; Flats
-            </h1>
-            {useMockData && (
-              <span className="rounded-full bg-[#e8f5f2] px-2.5 py-0.5 text-xs font-semibold text-[#0d7369]">
-                Sample data
-              </span>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Rooms &amp; Flats
+          </h1>
           <p className="text-sm text-slate-500">
             Pokhara room &amp; flat listings · {countLabel}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setUseMockData((prev) => !prev)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-xs transition hover:bg-slate-50"
-          >
-            {useMockData ? "Use live data" : "Preview sample data"}
-          </button>
-          <Link
-            href="/listings/new"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0d7369] px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#0a5c54]"
-          >
-            <span aria-hidden="true">+</span> Post listing
-          </Link>
-        </div>
+        <Link
+          href="/listings/new"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#0d7369] px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-[#0a5c54]"
+        >
+          <span aria-hidden="true">+</span> Post listing
+        </Link>
       </div>
 
       <section
@@ -285,22 +248,13 @@ export default function ListingsBrowser() {
           className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-10 text-center"
         >
           <p className="text-sm font-medium text-red-800">{errorMessage}</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => setReloadNonce((n) => n + 1)}
-              className="rounded-xl bg-red-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-800"
-            >
-              Try again
-            </button>
-            <button
-              type="button"
-              onClick={() => setUseMockData(true)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Preview sample data
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setReloadNonce((n) => n + 1)}
+            className="rounded-xl bg-red-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-800"
+          >
+            Try again
+          </button>
         </div>
       ) : listings.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-14 text-center shadow-xs">
@@ -312,8 +266,8 @@ export default function ListingsBrowser() {
               ? "Try adjusting your location search, price range, or listing type."
               : "There are no rooms or flats posted right now."}
           </p>
-          <div className="mt-1 flex flex-wrap justify-center gap-2">
-            {hasActiveFilters && (
+          {hasActiveFilters && (
+            <div className="mt-1 flex flex-wrap justify-center gap-2">
               <button
                 type="button"
                 onClick={handleClearFilters}
@@ -321,17 +275,8 @@ export default function ListingsBrowser() {
               >
                 Clear filters
               </button>
-            )}
-            {!useMockData && (
-              <button
-                type="button"
-                onClick={() => setUseMockData(true)}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                Preview sample data
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
