@@ -197,7 +197,7 @@ export default function ListingDetailPage({ params }: PageProps<"/listings/[id]"
                     <a href={`tel:${state.listing.contact_phone}`} className="flex min-w-0 items-center gap-3 font-semibold text-slate-900 hover:text-teal-800">
                       <Icon name="phone" className="text-teal-700" /><span className="truncate">{state.listing.contact_phone}</span>
                     </a>
-                    <button type="button" onClick={() => void copyPhone(state.listing!.contact_phone)} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 transition hover:bg-slate-100" aria-label="Copy phone number">
+                    <button type="button" onClick={() => { const phone = state.listing?.contact_phone; if (phone) void copyPhone(phone); }} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 transition hover:bg-slate-100" aria-label="Copy phone number">
                       <Icon name="copy" className="h-4 w-4" />{copied ? "Copied" : "Copy"}
                     </button>
                   </div>
