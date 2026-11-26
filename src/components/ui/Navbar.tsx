@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import PostChooser from "@/components/post-chooser";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -94,12 +95,7 @@ export default function Navbar() {
           </Link>
         </nav>
 
-        <Link
-          href="/listings/new"
-          className="order-2 inline-flex items-center gap-1.5 rounded-xl bg-[#0d7369] px-4 py-2 text-sm font-semibold text-white shadow-xs transition hover:bg-[#0a5c54] sm:order-3"
-        >
-          <span aria-hidden="true">+</span> Post
-        </Link>
+        <PostChooser />
       </div>
     </header>
   );
