@@ -47,7 +47,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElemen
       setSuccess(true);
       // Redirect to home or listings after a short pause
       setTimeout(() => router.push("/"), 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err?.message ?? "Failed to submit requirement");
     } finally {
       setSubmitting(false);
